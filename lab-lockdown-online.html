@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lab Lockdown: Chemical Reactions Escape Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E4EAF0; --panel:#F7F9FB; --ink:#17283A; --muted:#5A6B7C; --line:#C3CED9; --soft:#EDF1F5;
+  --yellow:#F2C230; --yellow-ink:#17283A; --open:#1F7A6B; --open-bg:#DDF0EC; --err:#B23A26; --err-bg:#F8E3DE;
+  --locked:#9AA8B6;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121D28; --panel:#1C2B3A; --ink:#E5ECF2; --muted:#9DB0C2; --line:#2F4256; --soft:#233547;
+    --yellow-ink:#121D28; --open:#5CC6B1; --open-bg:#173A35; --err:#F08A76; --err-bg:#3E2420; --locked:#4E6275;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121D28; --panel:#1C2B3A; --ink:#E5ECF2; --muted:#9DB0C2; --line:#2F4256; --soft:#233547;
+  --yellow-ink:#121D28; --open:#5CC6B1; --open-bg:#173A35; --err:#F08A76; --err-bg:#3E2420; --locked:#4E6275;
+  color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:1.0625rem;line-height:1.5}
+.wrap{max-width:46rem;margin:0 auto;padding:1.25rem 1rem 3rem}
+.hazard{height:14px;border-radius:3px;background:repeating-linear-gradient(-45deg,var(--yellow) 0 14px,var(--ink) 14px 28px);margin-bottom:1.25rem}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem}
+h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:800;font-size:clamp(2.6rem,9vw,3.6rem);line-height:.92;margin:0}
+.sub{margin:.4rem 0 0;color:var(--muted)}
+.timer{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:2.2rem;font-variant-numeric:tabular-nums;line-height:1;text-align:right}
+.timer small{display:block;font-family:"Barlow",sans-serif;font-size:.85rem;font-weight:500;color:var(--muted)}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--panel);border:2px solid var(--line);border-radius:6px;padding:.45rem .6rem;min-width:0}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+button{font:inherit;font-weight:600;border:0;border-radius:6px;padding:.6rem 1.1rem;cursor:pointer;background:var(--yellow);color:var(--yellow-ink)}
+.card{background:var(--panel);border:2px solid var(--line);border-left-width:8px;border-radius:8px;padding:1.1rem 1.2rem}
+.brief{border-left-color:var(--yellow)}
+.brief p{margin:.5rem 0}
+.brief ul{margin:.5rem 0;padding-left:1.25rem}
+.brief .start{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem}
+.brief .start input{flex:1;min-width:12rem}
+.locks{list-style:none;margin:1rem 0 0;padding:0;display:grid;gap:.9rem}
+.lock[data-state="locked"]{border-left-color:var(--locked)}
+.lock[data-state="active"]{border-left-color:var(--yellow)}
+.lock[data-state="open"]{border-left-color:var(--open)}
+.lock[data-state="locked"] .body,.lock[data-state="open"] .body{display:none}
+.lock h2{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:800;font-size:1.6rem;margin:0;line-height:1.1;display:flex;justify-content:space-between;gap:.5rem}
+.lock h2 .st{font-family:"Barlow",sans-serif;font-size:.9rem;font-weight:600;color:var(--muted);align-self:center;white-space:nowrap}
+.lock[data-state="open"] h2 .st{color:var(--open)}
+.story{margin:.4rem 0 .9rem}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;margin:.25rem 0 .75rem}
+th,td{border-bottom:1px solid var(--line);padding:.5rem .4rem;text-align:left;vertical-align:middle}
+th{font-size:.9rem;color:var(--muted);font-weight:600}
+.eq{font-size:1.1rem;white-space:nowrap}
+.eq input{width:2.6rem;text-align:center;padding:.3rem .2rem;font-weight:600}
+.decoder{display:flex;flex-wrap:wrap;gap:.4rem .9rem;background:var(--soft);border-radius:6px;padding:.6rem .8rem;margin-bottom:.75rem;font-size:.95rem}
+.decoder b{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:1.15rem}
+.letter{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:1.5rem;font-weight:800;width:2rem;text-align:center}
+.series{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;background:var(--soft);border-radius:6px;padding:.6rem .8rem;margin-bottom:.75rem;font-size:.95rem}
+.series h3{margin:0 0 .25rem;font-size:.95rem}
+.series ol{margin:0;padding-left:1.2rem}
+.yn{display:inline-flex;border:2px solid var(--line);border-radius:6px;overflow:hidden}
+.yn button{background:transparent;color:var(--ink);border-radius:0;padding:.35rem .9rem}
+.yn button[aria-pressed="true"]{background:var(--yellow);color:var(--yellow-ink)}
+.prob{margin:.75rem 0}
+.prob p{margin:0 0 .35rem}
+.prob input{width:6rem}
+textarea{width:100%;min-height:4.5rem;resize:vertical}
+.actions{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-top:.5rem}
+.fb{margin:.6rem 0 0;padding:.55rem .75rem;border-radius:6px;display:none}
+.fb.err{display:block;background:var(--err-bg);color:var(--err)}
+.fb.hint{display:block;background:var(--soft);color:var(--ink)}
+.done{margin:.4rem 0 0;color:var(--open);display:none}
+.lock[data-state="open"] .done{display:block}
+.escaped{display:none;margin-top:1.5rem;text-align:center;border:3px solid var(--open);border-radius:10px;padding:1.5rem 1rem;background:var(--panel)}
+.escaped.show{display:block;animation:pop .5s ease-out}
+.escaped h2{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:800;font-size:3rem;margin:0;color:var(--open)}
+.escaped .time{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:2.4rem;font-weight:600;font-variant-numeric:tabular-nums;margin:.25rem 0}
+.escaped blockquote{margin:1rem auto 0;max-width:34rem;text-align:left;background:var(--soft);border-radius:6px;padding:.75rem 1rem}
+@keyframes pop{from{transform:scale(.94);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion: reduce){.escaped.show{animation:none}}
+.foot{margin-top:2rem;text-align:center}
+.reset{background:transparent;color:var(--muted);border:2px solid var(--line);font-size:.9rem;padding:.4rem .9rem}
+.hidden{display:none}
+@media (max-width:520px){.series{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hazard" aria-hidden="true"></div>
+  <header>
+    <div>
+      <h1>Lab Lockdown</h1>
+      <p class="sub">A chemical reactions escape room</p>
+    </div>
+    <div class="timer"><span id="clock">00:00</span><small id="clockLabel">Not started</small></div>
+  </header>
+
+  <section class="card brief" id="brief">
+    <p>A late-night experiment set off the lab’s security system, and your team is sealed inside. The building’s computer will only release the doors if you prove you understand chemical reactions.</p>
+    <p>There are four locks, opened in order. Work out every answer as a team, then press the button to test it. A wrong answer won’t lock you out, but the computer won’t tell you which part was wrong.</p>
+    <ul>
+      <li>Everyone on the team should be able to explain every answer.</li>
+      <li>You may use your notes and a periodic table.</li>
+      <li>After three wrong tries on a lock, the computer gives you a hint.</li>
+    </ul>
+    <div class="start" id="startRow">
+      <input id="teamName" type="text" placeholder="Team name" aria-label="Team name" maxlength="40">
+      <button type="button" id="startBtn">Start the escape</button>
+    </div>
+  </section>
+
+  <ol class="locks hidden" id="locks">
+
+    <li class="card lock" id="lock0">
+      <h2><span>Lock 1: The Sorting Terminal</span><span class="st"></span></h2>
+      <div class="body">
+        <p class="story">The terminal flashes five reactions from the night’s experiments. Classify each one. The decoder turns each type into a letter.</p>
+        <div class="decoder">
+          <span>Synthesis <b>T</b></span><span>Decomposition <b>O</b></span><span>Single replacement <b>M</b></span><span>Double replacement <b>A</b></span><span>Combustion <b>S</b></span>
+        </div>
+        <div class="scroll"><table>
+          <thead><tr><th>#</th><th>Reaction</th><th>Type</th><th>Letter</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td class="eq">Pb(NO<sub>3</sub>)<sub>2</sub> + 2KI → PbI<sub>2</sub> + 2KNO<sub>3</sub></td><td><select aria-label="Type for reaction 1"></select></td><td class="letter"></td></tr>
+            <tr><td>2</td><td class="eq">2Na + Cl<sub>2</sub> → 2NaCl</td><td><select aria-label="Type for reaction 2"></select></td><td class="letter"></td></tr>
+            <tr><td>3</td><td class="eq">2H<sub>2</sub>O<sub>2</sub> → 2H<sub>2</sub>O + O<sub>2</sub></td><td><select aria-label="Type for reaction 3"></select></td><td class="letter"></td></tr>
+            <tr><td>4</td><td class="eq">Zn + 2HCl → ZnCl<sub>2</sub> + H<sub>2</sub></td><td><select aria-label="Type for reaction 4"></select></td><td class="letter"></td></tr>
+            <tr><td>5</td><td class="eq">CH<sub>4</sub> + 2O<sub>2</sub> → CO<sub>2</sub> + 2H<sub>2</sub>O</td><td><select aria-label="Type for reaction 5"></select></td><td class="letter"></td></tr>
+          </tbody>
+        </table></div>
+        <div class="actions"><button type="button" class="try">Enter the code</button></div>
+        <p class="fb" role="status"></p>
+      </div>
+      <p class="done">Terminal accepted. Every reaction is sorted.</p>
+    </li>
+
+    <li class="card lock" id="lock1">
+      <h2><span>Lock 2: The Balance Vault</span><span class="st"></span></h2>
+      <div class="body">
+        <p class="story">The vault opens only when all four equations are balanced with the lowest whole-number coefficients. An empty box counts as 1.</p>
+        <div class="scroll"><table>
+          <tbody>
+            <tr><td>A</td><td class="eq"><input inputmode="numeric" aria-label="A coefficient 1"> H<sub>2</sub> + <input inputmode="numeric" aria-label="A coefficient 2"> O<sub>2</sub> → <input inputmode="numeric" aria-label="A coefficient 3"> H<sub>2</sub>O</td></tr>
+            <tr><td>B</td><td class="eq"><input inputmode="numeric" aria-label="B coefficient 1"> Al + <input inputmode="numeric" aria-label="B coefficient 2"> O<sub>2</sub> → <input inputmode="numeric" aria-label="B coefficient 3"> Al<sub>2</sub>O<sub>3</sub></td></tr>
+            <tr><td>C</td><td class="eq"><input inputmode="numeric" aria-label="C coefficient 1"> C<sub>3</sub>H<sub>8</sub> + <input inputmode="numeric" aria-label="C coefficient 2"> O<sub>2</sub> → <input inputmode="numeric" aria-label="C coefficient 3"> CO<sub>2</sub> + <input inputmode="numeric" aria-label="C coefficient 4"> H<sub>2</sub>O</td></tr>
+            <tr><td>D</td><td class="eq"><input inputmode="numeric" aria-label="D coefficient 1"> KClO<sub>3</sub> → <input inputmode="numeric" aria-label="D coefficient 2"> KCl + <input inputmode="numeric" aria-label="D coefficient 3"> O<sub>2</sub></td></tr>
+          </tbody>
+        </table></div>
+        <p>Count every atom on both sides before you test it.</p>
+        <div class="actions"><button type="button" class="try">Test the balance</button></div>
+        <p class="fb" role="status"></p>
+      </div>
+      <p class="done">The vault clicks open. Atoms balanced on both sides.</p>
+    </li>
+
+    <li class="card lock" id="lock2">
+      <h2><span>Lock 3: The Reactivity Gate</span><span class="st"></span></h2>
+      <div class="body">
+        <p class="story">The gate opens for teams who can predict which single replacement reactions actually happen. A free element replaces an element in a compound only if it is higher on its list.</p>
+        <div class="series">
+          <div><h3>Metals (most reactive first)</h3><ol><li>Li, K, Ba, Ca, Na</li><li>Mg, Al, Zn</li><li>Fe, Ni, Sn, Pb</li><li>(H<sub>2</sub>)</li><li>Cu, Ag, Au</li></ol></div>
+          <div><h3>Halogens (most reactive first)</h3><ol><li>F<sub>2</sub></li><li>Cl<sub>2</sub></li><li>Br<sub>2</sub></li><li>I<sub>2</sub></li></ol></div>
+        </div>
+        <div class="scroll"><table>
+          <thead><tr><th>#</th><th>Reactants</th><th>Will it react?</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td class="eq">Cu + ZnSO<sub>4</sub></td><td><span class="yn" role="group" aria-label="Reaction 1"><button type="button" aria-pressed="false">Yes</button><button type="button" aria-pressed="false">No</button></span></td></tr>
+            <tr><td>2</td><td class="eq">Zn + CuSO<sub>4</sub></td><td><span class="yn" role="group" aria-label="Reaction 2"><button type="button" aria-pressed="false">Yes</button><button type="button" aria-pressed="false">No</button></span></td></tr>
+            <tr><td>3</td><td class="eq">Cl<sub>2</sub> + NaBr</td><td><span class="yn" role="group" aria-label="Reaction 3"><button type="button" aria-pressed="false">Yes</button><button type="button" aria-pressed="false">No</button></span></td></tr>
+            <tr><td>4</td><td class="eq">Ag + HCl</td><td><span class="yn" role="group" aria-label="Reaction 4"><button type="button" aria-pressed="false">Yes</button><button type="button" aria-pressed="false">No</button></span></td></tr>
+            <tr><td>5</td><td class="eq">Fe + AgNO<sub>3</sub></td><td><span class="yn" role="group" aria-label="Reaction 5"><button type="button" aria-pressed="false">Yes</button><button type="button" aria-pressed="false">No</button></span></td></tr>
+          </tbody>
+        </table></div>
+        <div class="actions"><button type="button" class="try">Open the gate</button></div>
+        <p class="fb" role="status"></p>
+      </div>
+      <p class="done">The gate slides up. You know who can replace whom.</p>
+    </li>
+
+    <li class="card lock" id="lock3">
+      <h2><span>Lock 4: The Exit Door</span><span class="st"></span></h2>
+      <div class="body">
+        <p class="story">The final door asks one question: where does the mass go? Answer each problem in whole grams.</p>
+        <div class="prob"><p><b>Problem 1.</b> Baking soda and vinegar react in an open beaker. Bubbles of CO<sub>2</sub> escape into the air. The beaker and contents had a mass of 312 g before and 309 g after. How many grams of gas escaped?</p><input class="m" inputmode="decimal" aria-label="Problem 1 answer in grams"> g</div>
+        <div class="prob"><p><b>Problem 2.</b> The same reaction runs inside a sealed zip-top bag that starts at 215 g. How many grams of mass are lost by the end?</p><input class="m" inputmode="decimal" aria-label="Problem 2 answer in grams"> g</div>
+        <div class="prob"><p><b>Problem 3.</b> In 2Mg + O<sub>2</sub> → 2MgO, 4.8 g of magnesium reacts completely with 3.2 g of oxygen. What mass of magnesium oxide forms?</p><input class="m" inputmode="decimal" aria-label="Problem 3 answer in grams"> g</div>
+        <div class="prob"><p><b>Explain it.</b> In one sentence, why do Problems 1 and 2 give different answers for the same reaction?</p><textarea id="explain" aria-label="Explanation"></textarea></div>
+        <div class="actions"><button type="button" class="try">Unlock the exit</button></div>
+        <p class="fb" role="status"></p>
+      </div>
+      <p class="done">Mass conserved. The exit door unlocks.</p>
+    </li>
+  </ol>
+
+  <section class="escaped" id="escaped" aria-live="polite">
+    <h2>Doors open</h2>
+    <p id="escTeam"></p>
+    <div class="time" id="escTime"></div>
+    <p>Show your teacher this screen.</p>
+    <blockquote id="escExplain"></blockquote>
+  </section>
+
+  <div class="foot"><button class="reset" id="reset">Reset for next team</button></div>
+</div>
+
+<script>
+const cyrb53=(str,seed=7)=>{let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(let i=0,ch;i<str.length;i++){ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677);}h1=Math.imul(h1^(h1>>>16),2246822507);h1^=Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507);h2^=Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0);};
+const HASH=[2063769308497935,6063244038964225,1353506584308975,3541369809744611];
+const HINTS=[
+  "Hint: count the reactants and products. Is one compound breaking apart, are two things joining, or is something trading partners?",
+  "Hint: for combustion, balance C first, then H, and save O for last. For Al₂O₃, try making the oxygen atoms equal 6 on both sides.",
+  "Hint: find the lone element and the element in the compound it would kick out. Is the lone element higher on the list?",
+  "Hint: mass is never destroyed. If the scale reads less, where did it go? In a closed system, nothing can leave."
+];
+const TYPES=[["","Choose…"],["T","Synthesis"],["O","Decomposition"],["M","Single replacement"],["A","Double replacement"],["S","Combustion"]];
+const KEY="lab-lockdown-online-v2";
+
+let state={started:false,solved:0,start:null,end:null,team:"",tries:[0,0,0,0],explain:""};
+try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&typeof s.solved==="number")state=Object.assign(state,s);}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}};
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+
+$$("#lock0 select").forEach(sel=>{
+  TYPES.forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;sel.appendChild(o);});
+  sel.addEventListener("change",()=>{sel.closest("tr").querySelector(".letter").textContent=sel.value;});
+});
+$$(".yn").forEach(g=>{
+  const [y,n]=$$("button",g);
+  [y,n].forEach(b=>b.addEventListener("click",()=>{y.setAttribute("aria-pressed",String(b===y));n.setAttribute("aria-pressed",String(b===n));}));
+});
+
+const readers=[
+  ()=>{const v=$$("#lock0 select").map(s=>s.value);return v.includes("")?null:v.join("");},
+  ()=>$$("#lock1 tbody tr").map(r=>$$("input",r).map(i=>{const t=i.value.trim();if(t==="")return "1";const n=parseInt(t,10);return Number.isNaN(n)?t:String(n);}).join("")).join("-"),
+  ()=>{const v=$$("#lock2 .yn").map(g=>{const [y,n]=$$("button",g);return y.getAttribute("aria-pressed")==="true"?"Y":n.getAttribute("aria-pressed")==="true"?"N":"";});return v.includes("")?null:v.join("");},
+  ()=>{const v=$$("#lock3 .m").map(i=>i.value.trim());if(v.includes(""))return null;if(!$("#explain").value.trim())return "EXPLAIN";return v.map(x=>{const n=Number(x);return Number.isFinite(n)?String(n):x;}).join("-");}
+];
+const missing=["Choose a type for all five reactions first.",null,"Choose Yes or No for all five reactions first.","Answer all three problems first."];
+
+$$(".lock").forEach((li,i)=>{
+  const fb=$(".fb",li);
+  $(".try",li).addEventListener("click",()=>{
+    const v=readers[i]();
+    if(v===null){fb.className="fb err";fb.textContent=missing[i];return;}
+    if(v==="EXPLAIN"){fb.className="fb err";fb.textContent="Write your one-sentence explanation before unlocking the exit.";return;}
+    if(cyrb53("LLO-"+v)===HASH[i]){
+      state.solved=i+1;
+      if(i===3){state.end=Date.now();state.explain=$("#explain").value.trim();}
+      save();render();
+      const next=document.getElementById("lock"+(i+1))||$("#escaped");
+      next.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
+    }else{
+      state.tries[i]++;save();
+      if(state.tries[i]>=3){fb.className="fb hint";fb.textContent=`Not yet (${state.tries[i]} tries). `+HINTS[i];}
+      else{fb.className="fb err";fb.textContent="Access denied. At least one answer is wrong. Check your work and try again.";}
+    }
+  });
+});
+
+const fmt=ms=>{const t=Math.max(0,Math.floor(ms/1000));return String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0");};
+
+function render(){
+  $("#startRow").classList.toggle("hidden",state.started);
+  $("#locks").classList.toggle("hidden",!state.started);
+  $$(".lock").forEach((li,i)=>{
+    const st=i<state.solved?"open":i===state.solved?"active":"locked";
+    li.dataset.state=st;
+    $(".st",li).textContent=st==="open"?"Unlocked":st==="active"?"In progress":"Locked";
+  });
+  const esc=$("#escaped");
+  if(state.end){
+    esc.classList.add("show");
+    $("#escTeam").textContent=state.team?`Team ${state.team} escaped in`:"Your team escaped in";
+    $("#escTime").textContent=fmt(state.end-state.start);
+    $("#escExplain").textContent=state.explain?`Our explanation: ${state.explain}`:"";
+    $("#escExplain").classList.toggle("hidden",!state.explain);
+  }else esc.classList.remove("show");
+}
+function tick(){
+  if(!state.start){$("#clock").textContent="00:00";$("#clockLabel").textContent="Not started";return;}
+  $("#clock").textContent=fmt((state.end||Date.now())-state.start);
+  $("#clockLabel").textContent=state.end?"Final time":"Elapsed";
+}
+setInterval(tick,500);
+
+$("#teamName").value=state.team||"";
+$("#startBtn").addEventListener("click",()=>{
+  state.team=$("#teamName").value.trim();state.started=true;state.start=Date.now();save();render();tick();
+  $("#lock0").scrollIntoView({block:"start"});
+});
+$("#reset").addEventListener("click",()=>{
+  if(!confirm("Reset all locks and the timer for a new team?"))return;
+  try{localStorage.removeItem(KEY);}catch(e){}
+  location.reload();
+});
+
+render();tick();
+</script>
+</body>
+</html>
